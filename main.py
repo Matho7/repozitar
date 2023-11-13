@@ -1,13 +1,7 @@
 import tornado.ioloop
 import tornado.web
 import psycopg2
-from tornado.options import define, options
-
-# Define your database connection parameters
-define("db_host", default="147.175.106.248", help="Database host")
-define("db_database", default="DB_luptak", help="Database name")
-define("db_user", default="xluptak", help="Database user")
-define("db_password", default="mArTiN.", help="Database password")
+from config import db_host, db_database, db_user, db_password
 
 # Request handler that interacts with the database
 class MainHandler(tornado.web.RequestHandler):
@@ -15,10 +9,10 @@ class MainHandler(tornado.web.RequestHandler):
         try:
             # Establish a connection to the database
             connection = psycopg2.connect(
-                host=options.db_host,
-                database=options.db_database,
-                user=options.db_user,
-                password=options.db_password
+                host=db_host,
+                database=db_database,
+                user=db_user,
+                password=db_password
             )
 
             # Create a cursor to execute SQL queries
@@ -49,7 +43,6 @@ def make_app():
     ])
 
 if __name__ == "__main__":
-    tornado.options.parse_command_line()
     app = make_app()
     app.listen(8888)
     tornado.ioloop.IOLoop.current().start()
