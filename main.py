@@ -6,6 +6,8 @@ from config import db_host, db_database, db_user, db_password
 # Request handler that interacts with the database
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
+
+        self.render("index.html")
         try:
             # Establish a connection to the database
             connection = psycopg2.connect(
