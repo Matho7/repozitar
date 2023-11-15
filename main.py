@@ -6,8 +6,11 @@ from config import db_host, db_database, db_user, db_password
 # Request handler that interacts with the database
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
-
-        self.render("index.html")
+        try:
+            self.render("index.html")
+        except Exception as e:
+            self.write("Error: {}".format(str(e)))
+        '''
         try:
             # Establish a connection to the database
             connection = psycopg2.connect(
@@ -38,6 +41,7 @@ class MainHandler(tornado.web.RequestHandler):
         except Exception as e:
             # Handle database connection or query errors
             self.write(f"Error: {e}")
+        '''
 
 def make_app():
     return tornado.web.Application([
@@ -47,4 +51,5 @@ def make_app():
 if __name__ == "__main__":
     app = make_app()
     app.listen(8888)
+    print("Server is running at http://localhost:8888")
     tornado.ioloop.IOLoop.current().start()
