@@ -11,7 +11,6 @@ class MainHandler(tornado.web.RequestHandler):
         except Exception as e:
             self.write("Error: {}".format(str(e)))
 
-
 def make_app():
     return tornado.web.Application([
         (r"/", MainHandler),
