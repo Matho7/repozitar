@@ -14,7 +14,9 @@
     <div id="map"></div>
 
     <script>
+
         function initMap() {
+            var api_key = '{{ api_key }}'; // Use the template variable here
 
             var originCoords = { lat: {{ originCoords[0] }}, lng: {{ originCoords[1] }} };
             var destCoords = { lat: {{ destCoords[0] }}, lng: {{ destCoords[1] }} };
@@ -59,6 +61,6 @@
             });
         }
     </script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCfJl4fQQfTmfqeME7JkZw3pE1AcoHKCIQ&callback=initMap" async defer></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ api_key }}&callback=initMap" async defer></script>
 </body>
 </html>

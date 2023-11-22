@@ -6,7 +6,7 @@ import tornado.ioloop
 import tornado.web
 import psycopg2
 
-from config import api_key  # Import the api_key variable from config.py
+import config
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
@@ -23,7 +23,7 @@ class MapHandler(tornado.web.RequestHandler):
         dest_coords = self.get_coordinates(destination)
 
         # Render the template and pass variables
-        self.render("map.html", originCoords=origin_coords, destCoords=dest_coords, travelMode=travel_mode)
+        self.render("map.html", api_key=config.api_key, originCoords=origin_coords, destCoords=dest_coords, travelMode=travel_mode)
 
     def get_coordinates(self, location):
         geolocator = Nominatim(user_agent="my_geocoder")
