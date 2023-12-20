@@ -5,8 +5,8 @@ from geopy.geocoders import Nominatim
 import tornado.ioloop
 import tornado.web
 import psycopg2
-
 import config
+from geopy.exc import GeocoderTimedOut, GeocoderServiceError
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
@@ -17,22 +17,34 @@ class MapHandler(tornado.web.RequestHandler):
         origin = self.get_argument("origin")
         destination = self.get_argument("destination")
         travel_mode = self.get_argument("travelMode")
+        waypoints = self.get_arguments("waypoint")  # Extract waypoints from the request
 
-        # Get coordinates for origin and destination
-        origin_coords = self.get_coordinates(origin)
-        dest_coords = self.get_coordinates(destination)
+        try:
+            origin_coords = self.get_coordinates(origin)
+            dest_coords = self.get_coordinates(destination)
+        except GeocoderTimedOut:
+            # Handle timeout error (e.g., geocoding service took too long)
+            self.write("Geocoding service timed out. Please try again later.")
+            return
+        except GeocoderServiceError:
+            # Handle other geocoding service errors
+            self.write("Error occurred during geocoding. Please check your input.")
+            return
 
         # Render the template and pass variables
-        self.render("map.html", api_key=config.api_key, originCoords=origin_coords, destCoords=dest_coords, travelMode=travel_mode)
+        self.render("map.html", api_key=config.api_key, originCoords=origin_coords, destCoords=dest_coords,
+                    travelMode=travel_mode, waypoints=waypoints)
 
     def get_coordinates(self, location):
-        geolocator = Nominatim(user_agent="my_geocoder")
-        location_info = geolocator.geocode(location)
-        if location_info:
-            return location_info.latitude, location_info.longitude
-        else:
-            # Fallback to dummy coordinates if geocoding fails
-            return 37.42299, -122.143076
+        try:
+            geolocator = Nominatim(user_agent="my_geocoder")
+            location_info = geolocator.geocode(location)
+            if location_info:
+                return location_info.latitude, location_info.longitude
+            else:
+                raise GeocoderServiceError("Geocoding failed")
+        except GeocoderTimedOut:
+            raise GeocoderTimedOut("Geocoding service timed out")
 
 def make_app():
     return tornado.web.Application([

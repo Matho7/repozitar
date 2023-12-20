@@ -14,13 +14,13 @@
     <div id="map"></div>
 
     <script>
-
         function initMap() {
             var api_key = '{{ api_key }}'; // Use the template variable here
 
             var originCoords = { lat: {{ originCoords[0] }}, lng: {{ originCoords[1] }} };
             var destCoords = { lat: {{ destCoords[0] }}, lng: {{ destCoords[1] }} };
             var travelMode = '{{ travelMode }}'; // Use single quotes for string literals
+            var waypoints = waypoints; // Parse the waypoints from the template
 
             var map = new google.maps.Map(document.getElementById('map'), {
                 center: originCoords,
@@ -50,8 +50,17 @@
             var request = {
                 origin: originCoords,
                 destination: destCoords,
-                travelMode: travelMode // Replace with actual travel mode
+                travelMode: travelMode,
+                waypoints: []
             };
+
+            // Add the waypoints to the request
+            for (var i = 0; i < waypoints.length; i++) {
+                request.waypoints.push({
+                    location: waypoints[i],
+                    stopover: true
+                });
+            }
 
             // Get directions and display them on the map
             directionsService.route(request, function(response, status) {

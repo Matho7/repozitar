@@ -5,21 +5,59 @@
 </head>
 <body>
     <form action="/map" method="post">
-        <label for="origin">Origin:</label>
-        <input type="text" id="origin" name="origin">
-        <br>
-        <label for="destination">Destination:</label>
-        <input type="text" id="destination" name="destination">
-        <br>
-        <label for="travelMode">Travel Mode:</label>
-        <select id="travelMode" name="travelMode">
-            <option value="DRIVING">Autom</option>
-            <option value="WALKING">Pešo</option>
-            <option value="BICYCLING">Na bicykli</option>
-            <option value="TRANSIT">Verejná doprava</option>
-        </select>
-        <br>
-        <button type="submit">Get Directions</button>
+    <label for="origin">Origin:</label>
+    <input type="text" id="origin" name="origin">
+    <br>
+    <label for="destination">Destination:</label>
+    <input type="text" id="destination" name="destination">
+    <br>
+    <label for="waypoint">Waypoint:</label>
+    <input type="text" id="waypoint" name="waypoint">
+    <button type="button" onclick="addWaypoint()">+</button>
+    <br>
+    <ul id="waypointList"></ul> <!-- Display waypoints here -->
+    <label for="travelMode">Travel Mode:</label>
+    <select id="travelMode" name="travelMode">
+        <option value="DRIVING">Autom</option>
+        <option value="WALKING">Pešo</option>
+        <option value="BICYCLING">Na bicykli</option>
+        <option value="TRANSIT">Verejná doprava</option>
+    </select>
+    <br>
+    <button type="submit" onclick="copyWaypoints()">Get Directions</button>
     </form>
+
+    <script>
+    const waypoints = [];
+
+    function addWaypoint() {
+        const waypointInput = document.getElementById('waypoint');
+        const waypointValue = waypointInput.value.trim();
+
+        if (waypointValue) {
+            waypoints.push(waypointValue);
+            console.log('Waypoints:', waypoints);
+
+            // Display the waypoint in the list
+            const waypointList = document.getElementById('waypointList');
+            const listItem = document.createElement('li');
+            listItem.textContent = waypointValue;
+            waypointList.appendChild(listItem);
+        } else {
+            console.log('Please enter a valid waypoint.');
+        }
+
+        // Clear the input field
+        waypointInput.value = '';
+    }
+
+    function copyWaypoints() {
+        const waypointInput = document.getElementById('waypoint');
+        const waypointList = document.getElementById('waypointList');
+        const waypoints = Array.from(waypointList.children).map(li => li.textContent);
+        waypointInput.value = waypoints.join(', ');
+    }
+    </script>
+
 </body>
 </html>
