@@ -1,55 +1,48 @@
-import googlemaps
 from gmplot import gmplot
 import geopy
 from geopy.geocoders import Nominatim
 import tornado.ioloop
 import tornado.web
-import psycopg2
 import config
-from geopy.exc import GeocoderTimedOut, GeocoderServiceError
+import psycopg2
+from config import db_host, db_database, db_user, db_password
+import googlemaps
+
+# Pripojenie k databáze
+conn = psycopg2.connect(
+    host=db_host,
+    database=db_database,
+    user=db_user,
+    password=db_password
+)
+
+# Vytvorenie kurzoru
+cur = conn.cursor()
+user_id = 1
+
+# Získanie trasy a jej bodov pre konkrétneho používateľa
+cur.execute("SELECT * FROM routes WHERE user_id = %s LIMIT 1", (user_id,))
+route = cur.fetchone()
+cur.execute("SELECT * FROM waypoints WHERE route_id = %s", (route[0],))
+waypoints = cur.fetchall()
+
+# Uloženie lat a long do pola
+waypoints_array = []
+for waypoint in waypoints:
+    lat = waypoint[2]
+    long = waypoint[3]
+    waypoints_array.append([lat, long])
+
+print("Waypoints array:", waypoints_array)
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
-        self.render("index.html")
 
-class MapHandler(tornado.web.RequestHandler):
-    def post(self):
-        origin = self.get_argument("origin")
-        destination = self.get_argument("destination")
-        travel_mode = self.get_argument("travelMode")
-        waypoints = self.get_arguments("waypoint")  # Extract waypoints from the request
-
-        try:
-            origin_coords = self.get_coordinates(origin)
-            dest_coords = self.get_coordinates(destination)
-        except GeocoderTimedOut:
-            # Handle timeout error (e.g., geocoding service took too long)
-            self.write("Geocoding service timed out. Please try again later.")
-            return
-        except GeocoderServiceError:
-            # Handle other geocoding service errors
-            self.write("Error occurred during geocoding. Please check your input.")
-            return
-
-        # Render the template and pass variables
-        self.render("map.html", api_key=config.api_key, originCoords=origin_coords, destCoords=dest_coords,
-                    travelMode=travel_mode, waypoints=waypoints)
-
-    def get_coordinates(self, location):
-        try:
-            geolocator = Nominatim(user_agent="my_geocoder")
-            location_info = geolocator.geocode(location)
-            if location_info:
-                return location_info.latitude, location_info.longitude
-            else:
-                raise GeocoderServiceError("Geocoding failed")
-        except GeocoderTimedOut:
-            raise GeocoderTimedOut("Geocoding service timed out")
+        self.render("index.html", waypoints_array=waypoints_array)
 
 def make_app():
     return tornado.web.Application([
-        (r"/", MainHandler),
-        (r"/map", MapHandler),
+        (r"/", MainHandler)
     ])
 
 if __name__ == "__main__":
