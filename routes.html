@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Routes</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+</head>
+<body>
+    <h1>Routes</h1>
+
+    <ul id="routes-list">
+        </ul>
+
+    <script>
+        $(document).ready(function() {
+            // Get routes and waypoints from the server
+            $.ajax({
+                url: '/get-routes-and-waypoints',
+                success: function(data) {
+                    routes = data.routes;
+                    waypoints = data.waypoints;
+
+                    // Create HTML elements for each route
+                    for (let i = 0; i < routes.length; i++) {
+                        route = routes[i];
+
+                        routeName = document.createElement('li');
+                        routeName.textContent = route.name;
+
+                        routeLink = document.createElement('a');
+                        routeLink.href = '/main.py?routeId=' + route.id;
+                        routeLink.textContent = routeName.textContent;
+
+                        routeName.appendChild(routeLink);
+
+                        $('#routes-list').append(routeName);
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
