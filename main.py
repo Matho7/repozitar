@@ -1,14 +1,11 @@
 import json
-from gmplot import gmplot
-import geopy
-from geopy.geocoders import Nominatim
 import tornado.ioloop
 import tornado.web
 import jinja2
 import config
 import psycopg2
 from config import db_host, db_database, db_user, db_password
-import googlemaps
+import folium
 from peewee import *
 
 db_host = config.db_host
@@ -61,9 +58,11 @@ class Waypoint(BaseModel):
         table_name = 'waypoints'
 
 
+db.connect()
+db.create_tables([User, Route, Waypoint])
+
+
 def get_routes_and_waypoints(user_id):
-    db.connect()
-    db.create_tables([User, Route, Waypoint])
     routes = Route.select().where(Route.user_id == user_id)
     waypoints = Waypoint.select().join(Route).where(Route.user_id == user_id)
     return routes, waypoints
@@ -82,9 +81,30 @@ for waypoint in waypoints:
 
 class RoutesHandler(tornado.web.RequestHandler):
     def get(self):
-        # routes, waypoints = get_routes_and_waypoints(user_id)
-        # self.render('routes.html', routes=routes, waypoints=waypoints)
-        self.render('index.html')
+        route_name = "Hiking in the Alps"
+        # Retrieve the route from the database
+        route = Route.select().where(Route.name == route_name).get()
+
+        # Retrieve the waypoints for the route
+        waypoints = Waypoint.select().where(Waypoint.route_id == route.id)
+
+        # Create a map object
+        m = folium.Map(location=[waypoints[0].lat, waypoints[0].long], zoom_start=13)
+
+        # Add markers to the map
+        for waypoint in waypoints:
+            folium.Marker([waypoint.lat, waypoint.long]).add_to(m)
+
+        # Create a list of coordinates for the polyline
+        coordinates = [[waypoint.lat, waypoint.long] for waypoint in waypoints]
+
+        # Create a polyline object and add it to the map
+        folium.PolyLine(locations=coordinates, color='red').add_to(m)
+
+        # Display the map
+        m.save('map.html')
+
+        self.render('map.html')
 
 
 class GetRoutesAndWaypointsHandler(tornado.web.RequestHandler):
