@@ -1,11 +1,14 @@
 import json
 import tornado.ioloop
 import tornado.web
+import os
 import jinja2
 import config
 import psycopg2
 from config import db_host, db_database, db_user, db_password
 import folium
+import requests
+import polyline
 from peewee import *
 
 db_host = config.db_host
@@ -81,9 +84,10 @@ for waypoint in waypoints:
 
 class RoutesHandler(tornado.web.RequestHandler):
     def get(self):
-        route_name = "Hiking in the Alps"
+
+        route_id = 3
         # Retrieve the route from the database
-        route = Route.select().where(Route.name == route_name).get()
+        route = Route.select().where(Route.id == route_id).get()
 
         # Retrieve the waypoints for the route
         waypoints = Waypoint.select().where(Waypoint.route_id == route.id)
@@ -102,29 +106,71 @@ class RoutesHandler(tornado.web.RequestHandler):
         folium.PolyLine(locations=coordinates, color='red').add_to(m)
 
         # Display the map
-        m.save('map.html')
+        m.save('polyline.html')
 
-        self.render('map.html')
+        self.render('polyline.html')
 
 
-class GetRoutesAndWaypointsHandler(tornado.web.RequestHandler):
-    def get(self, user_id):
-        # Get routes and waypoints from the database
-        routes, waypoints = get_routes_and_waypoints(user_id)
+class OSRMHandler(tornado.web.RequestHandler):
+    def get(self):
 
-        # Prepare data to send back to the client
-        data = {
-            'routes': routes,
-            'waypoints': waypoints
-        }
-        # Send data back as JSON response
-        self.write(json.dumps(data))
+        # Get the route id from the request
+        # route_id = self.get_argument('route_id')
+        route_id = 3
+
+        # Retrieve the route from the database
+        route = Route.select().where(Route.id == route_id).get()
+
+        # Retrieve the waypoints for the route
+        waypoints = Waypoint.select().where(Waypoint.route_id == route.id)
+
+        # Define the start and end coordinates
+        start = (waypoints[0].lat, waypoints[0].long)
+        end = (waypoints[-1].lat, waypoints[-1].long)
+
+        # Define the intermediate waypoints
+        intermediate_waypoints = [(waypoint.lat, waypoint.long) for waypoint in waypoints[1:-1]]
+
+        # Define the OSRM API URL
+        url = f'http://router.project-osrm.org/route/v1/driving/{start[1]},{start[0]};'
+
+        for waypoint in intermediate_waypoints:
+            url += f'{waypoint[1]},{waypoint[0]};'
+
+        url += f'{end[1]},{end[0]}?overview=full&geometries=polyline'
+
+        # Send a GET request to the API
+        response = requests.get(url)
+
+        # Extract the encoded polyline from the response
+        polyline_data = response.json()['routes'][0]['geometry']
+
+        # Decode the polyline into a list of coordinates
+        coordinates = polyline.decode(polyline_data)
+
+        # Create a map object
+        m = folium.Map(location=start, zoom_start=13)
+
+        # Add markers to the map
+        folium.Marker(start).add_to(m)
+        folium.Marker(end).add_to(m)
+
+        for waypoint in intermediate_waypoints:
+            folium.Marker(waypoint).add_to(m)
+
+        # Create a polyline object and add it to the map
+        folium.PolyLine(locations=coordinates, color='red').add_to(m)
+
+        # Display the map
+        m.save('osrm.html')
+
+        self.render('osrm.html')
 
 
 if __name__ == '__main__':
     app = tornado.web.Application([
-        (r'/', RoutesHandler),
-        (r'/get-routes-and-waypoints/(?P<user_id>\d+)', GetRoutesAndWaypointsHandler)
+        (r'/polyline', RoutesHandler),
+        (r'/osrm', OSRMHandler)
     ])
     app.listen(8888)
     print("Server started at http://localhost:8888")
