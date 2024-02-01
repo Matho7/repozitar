@@ -71,22 +71,11 @@ def get_routes_and_waypoints(user_id):
     return routes, waypoints
 
 
-routes, waypoints = get_routes_and_waypoints(1)
-
-print('Routes:')
-for route in routes:
-    print(f'- {route.name}')
-
-print('Waypoints:')
-for waypoint in waypoints:
-    print(f'- ({waypoint.lat}, {waypoint.long})')
-
-
-class RoutesHandler(tornado.web.RequestHandler):
+class PolylineHandler(tornado.web.RequestHandler):
     def get(self):
 
-        route_id = 3
-        # Retrieve the route from the database
+        route_id = self.get_argument('route_id')
+
         route = Route.select().where(Route.id == route_id).get()
 
         # Retrieve the waypoints for the route
@@ -111,12 +100,11 @@ class RoutesHandler(tornado.web.RequestHandler):
         self.render('polyline.html')
 
 
-class OSRMHandler(tornado.web.RequestHandler):
+class DirectionsHandler(tornado.web.RequestHandler):
     def get(self):
 
         # Get the route id from the request
-        # route_id = self.get_argument('route_id')
-        route_id = 3
+        route_id = self.get_argument('route_id')
 
         # Retrieve the route from the database
         route = Route.select().where(Route.id == route_id).get()
@@ -167,10 +155,20 @@ class OSRMHandler(tornado.web.RequestHandler):
         self.render('osrm.html')
 
 
+class RoutesHandler(tornado.web.RequestHandler):
+    def get(self):
+        # Retrieve routes with waypoints from the database
+        routes = Route.select().join(Waypoint).group_by(Route.id)
+
+        # Render the HTML table
+        self.render("routes.html", routes=routes)
+
+
 if __name__ == '__main__':
     app = tornado.web.Application([
-        (r'/polyline', RoutesHandler),
-        (r'/osrm', OSRMHandler)
+        (r'/polyline', PolylineHandler),
+        (r'/directions', DirectionsHandler),
+        (r'/routes', RoutesHandler)
     ])
     app.listen(8888)
     print("Server started at http://localhost:8888")
