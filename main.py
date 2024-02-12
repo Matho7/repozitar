@@ -72,9 +72,7 @@ def get_routes_and_waypoints(user_id):
 
 
 class PolylineHandler(tornado.web.RequestHandler):
-    def get(self):
-
-        route_id = self.get_argument('route_id')
+    def get(self, route_id):
 
         route = Route.select().where(Route.id == route_id).get()
 
@@ -82,7 +80,7 @@ class PolylineHandler(tornado.web.RequestHandler):
         waypoints = Waypoint.select().where(Waypoint.route_id == route.id)
 
         # Create a map object
-        m = folium.Map(location=[waypoints[0].lat, waypoints[0].long], zoom_start=13)
+        m = folium.Map(location=[waypoints[0].lat, waypoints[0].long], zoom_start=6)
 
         # Add markers to the map
         for waypoint in waypoints:
@@ -101,10 +99,7 @@ class PolylineHandler(tornado.web.RequestHandler):
 
 
 class DirectionsHandler(tornado.web.RequestHandler):
-    def get(self):
-
-        # Get the route id from the request
-        route_id = self.get_argument('route_id')
+    def get(self, route_id):
 
         # Retrieve the route from the database
         route = Route.select().where(Route.id == route_id).get()
@@ -137,7 +132,7 @@ class DirectionsHandler(tornado.web.RequestHandler):
         coordinates = polyline.decode(polyline_data)
 
         # Create a map object
-        m = folium.Map(location=start, zoom_start=13)
+        m = folium.Map(location=start, zoom_start=6)
 
         # Add markers to the map
         folium.Marker(start).add_to(m)
@@ -166,10 +161,10 @@ class RoutesHandler(tornado.web.RequestHandler):
 
 if __name__ == '__main__':
     app = tornado.web.Application([
-        (r'/polyline', PolylineHandler),
-        (r'/directions', DirectionsHandler),
+        (r'/polyline/(\d+)', PolylineHandler),
+        (r'/directions/(\d+)', DirectionsHandler),
         (r'/routes', RoutesHandler)
     ])
     app.listen(8888)
-    print("Server started at http://localhost:8888")
+    print("Server started at http://localhost:8888/routes")
     tornado.ioloop.IOLoop.current().start()
