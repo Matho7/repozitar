@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Route Data</title>
+</head>
+<body>
+    <h1>Route Data</h1>
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>User ID</th>
+            <th>Name</th>
+            <th>Creation Date</th>
+            <th>Polyline</th>
+            <th>Directions route</th>
+        </tr>
+        {% for route in routes %}
+        <tr>
+            <td>{{ route.id }}</td>
+            <td>{{ route.user_id }}</td>
+            <td>{{ route.name }}</td>
+            <td>{{ route.creation_date }}</td>
+            <td><a href="/polyline/{{ route.id }}">Polyline</a></td>
+            <td><a href="/directions/{{ route.id }}">Directions route</a></td>
+        </tr>
+        {% end %}
+    </table>
+</body>
+</html>
