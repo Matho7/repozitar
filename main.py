@@ -71,7 +71,6 @@ def conn():
 
 class PolylineHandler(tornado.web.RequestHandler):
     def get(self, route_id):
-        self.set_header("Cache-Control", "no-cache, no-store, must-revalidate")
         waypoints = Waypoint.select().where(Waypoint.route_id == route_id)
 
         m = folium.Map(location=[waypoints[0].lat, waypoints[0].lng], zoom_start=6)
@@ -93,8 +92,6 @@ class PolylineHandler(tornado.web.RequestHandler):
 
 class DirectionsHandler(tornado.web.RequestHandler):
     def get(self, route_id):
-        self.set_header("Cache-Control", "no-cache, no-store, must-revalidate")
-        os.remove("./directions.html")
 
         waypoints = Waypoint.select().where(Waypoint.route_id == route_id)
 
@@ -128,7 +125,6 @@ class DirectionsHandler(tornado.web.RequestHandler):
 
         m.save('directions.html')
 
-
         with open('./directions.html', 'r') as file:
             content = file.read()
 
@@ -147,6 +143,6 @@ if __name__ == '__main__':
         (r'/directions/(\d+)', DirectionsHandler),
         (r'/routes', RoutesHandler)
     ])
-    app.listen(8888)
-    print("Server started at http://localhost:8888/routes")
+    app.listen(8080)
+    print("Server started at http://localhost:8080/routes")
     tornado.ioloop.IOLoop.current().start()
