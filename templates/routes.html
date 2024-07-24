@@ -2,6 +2,13 @@
 <html>
 <head>
     <title>Route Data</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        #map {
+            height: 600px;
+            width: 100%;
+        }
+    </style>
 </head>
 <body>
     <h1>Route Data</h1>
@@ -23,7 +30,8 @@
             <td><a href="/polyline/{{ route.id }}">Polyline</a></td>
             <td><a href="/directions/{{ route.id }}">Directions route</a></td>
         </tr>
-        {% end %}
+        {% endfor %}
     </table>
+    <div id="map"></div>
 </body>
 </html>
