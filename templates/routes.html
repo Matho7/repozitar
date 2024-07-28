@@ -2,36 +2,62 @@
 <html>
 <head>
     <title>Route Data</title>
+    <link rel="stylesheet" href="/static/styles.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <style>
-        #map {
-            height: 600px;
-            width: 100%;
+        .back-button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 10px 2px;
+            cursor: pointer;
+            border-radius: 4px;
         }
     </style>
 </head>
 <body>
-    <h1>Route Data</h1>
-    <table>
-        <tr>
-            <th>ID</th>
-            <th>User ID</th>
-            <th>Name</th>
-            <th>Creation Date</th>
-            <th>Polyline</th>
-            <th>Directions route</th>
-        </tr>
-        {% for route in routes %}
-        <tr>
-            <td>{{ route.id }}</td>
-            <td>{{ route.user_id }}</td>
-            <td>{{ route.name }}</td>
-            <td>{{ route.creation_date }}</td>
-            <td><a href="/polyline/{{ route.id }}">Polyline</a></td>
-            <td><a href="/directions/{{ route.id }}">Directions route</a></td>
-        </tr>
-        {% endfor %}
-    </table>
+    <header>
+        <h1>Route Data</h1>
+    </header>
+    <div class="container">
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            <label for="file">Upload CSV:</label>
+            <input type="file" name="file" id="file" accept=".csv">
+            <button type="submit">Upload</button>
+        </form>
+
+        <!-- Miesto pre notifikácie -->
+        {% if message %}
+            <div class="notification">
+                {{ message }}
+            </div>
+        {% endif %}
+
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Creation Date</th>
+                <th>Polyline</th>
+                <th>Directions route</th>
+                <th>Action</th>
+            </tr>
+            {% for route in routes %}
+            <tr>
+                <td>{{ route.name }}</td>
+                <td>{{ route.creation_date }}</td>
+                <td><a href="/polyline/{{ route.id }}">Polyline</a></td>
+                <td><a href="/directions/{{ route.id }}">Directions route</a></td>
+                <td><a href="/delete/{{ route.id }}">delete</a></td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
     <div id="map"></div>
+    <button class="back-button" onclick="window.location.href='/'">Return to Home</button>
 </body>
 </html>

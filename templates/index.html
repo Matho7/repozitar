@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <title>Hlavná stránka</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+    <header>
+        <h1>Webová aplikácia na zobrazenie ciest na mape</h1>
+    </header>
+    <div class="container">
+        {% if user %}
+            <p>Vitajte, {{ user.email }}! <a href="/logout">Odhlásiť sa</a></p>
+        {% else %}
+            <p>Prosím, <a href="/login">prihláste sa</a> </p>
+        {% endif %}
+    </div>
+</body>
+</html>
