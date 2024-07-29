@@ -17,7 +17,8 @@ class BaseHandler(tornado.web.RequestHandler):
         user_id = self.get_secure_cookie("user")
         if not user_id:
             return None
-        return User.get(User.id == int(user_id.decode('utf-8')))
+        user = User.get(User.id == int(user_id.decode('utf-8')))
+        return user
 
 
 class IndexHandler(BaseHandler):
@@ -74,7 +75,6 @@ class RoutesHandler(BaseHandler):
         if not user:
             self.redirect("/login")
             return
-
         routes = Route.select().where(Route.user_id == user.id)
         message = self.get_argument("message", None)
         self.render_template("routes.html", routes=routes, message=message)
@@ -82,6 +82,10 @@ class RoutesHandler(BaseHandler):
 
 class PolylineHandler(BaseHandler):
     def get(self, route_id):
+        user = self.get_current_user()
+        if not user:
+            self.redirect("/login")
+            return
         waypoints = Waypoint.select().where(Waypoint.route_id == route_id)
         waypoint_list = [{"lat": wp.lat, "lng": wp.lng} for wp in waypoints]
         self.render_template("map.html", waypoints=waypoint_list)
@@ -89,6 +93,10 @@ class PolylineHandler(BaseHandler):
 
 class DirectionsHandler(BaseHandler):
     async def get(self, route_id):
+        user = self.get_current_user()
+        if not user:
+            self.redirect("/login")
+            return
         waypoints = Waypoint.select().where(Waypoint.route_id == route_id)
 
         if not waypoints:
@@ -178,7 +186,6 @@ class UploadHandler(BaseHandler):
             self.redirect(f"/routes?message=Upload failed: {e}")
 
 
-
 class DeleteRouteHandler(BaseHandler):
     def get(self, route_id):
         user = self.get_current_user()
@@ -203,6 +210,10 @@ class LogoutHandler(BaseHandler):
 
 class SimulateHandler(BaseHandler):
     def get(self):
+        user = self.get_current_user()
+        if not user:
+            self.redirect("/login")
+            return
         num_points = int(self.get_argument("points", 100))
         # Simulácia údajov
         points = [{"lat": 49.1951, "lng": 16.6068} for _ in range(num_points)]
