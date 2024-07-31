@@ -9,9 +9,9 @@ plt.figure(figsize=(10, 6))
 plt.plot(data['Number of Points'], data['Load Time (seconds)'], marker='o')
 
 # Nastavenie popisov a názvov
-plt.title('Load Time vs. Number of Points')
-plt.xlabel('Number of Points')
-plt.ylabel('Load Time (seconds)')
+plt.title('Čas načítania vs. Počet bodov')
+plt.xlabel('Počet bodov')
+plt.ylabel('Čas načítania (sekundy)')
 plt.grid(True)
 
 # Uloženie grafu

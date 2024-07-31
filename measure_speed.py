@@ -1,7 +1,6 @@
 import time
 import requests
 
-
 def measure_load_time(num_points):
     start_time = time.time()
 
@@ -13,7 +12,6 @@ def measure_load_time(num_points):
     load_time = end_time - start_time
     return load_time
 
-
 if __name__ == "__main__":
     num_points_list = [10, 50, 100, 200, 500, 1000]
     results = []
@@ -21,10 +19,10 @@ if __name__ == "__main__":
     for num_points in num_points_list:
         load_time = measure_load_time(num_points)
         results.append((num_points, load_time))
-        print(f"Number of points: {num_points}, Load time: {load_time:.4f} seconds")
+        print(f"Počet bodov: {num_points}, Čas načítania: {load_time:.4f} sekúnd")
 
     # Uloženie výsledkov do CSV
     with open('load_time_results.csv', 'w') as f:
-        f.write("Number of Points,Load Time (seconds)\n")
+        f.write("Počet bodov,Čas načítania (sekúnd)\n")
         for num_points, load_time in results:
             f.write(f"{num_points},{load_time:.4f}\n")

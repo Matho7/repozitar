@@ -128,48 +128,44 @@ class DirectionsHandler(BaseHandler):
 
 
 class UploadHandler(BaseHandler):
-    def post(self):
+    async def post(self):
         user = self.get_current_user()
         if not user:
             self.redirect("/login")
             return
 
-        # Získanie nahratého súboru
         fileinfo = self.request.files['file'][0]
         data = fileinfo['body'].decode('utf-8')
 
-        # Prečítanie CSV súboru
         reader = csv.reader(io.StringIO(data), delimiter=';')
         success = True
         try:
             for row in reader:
                 if len(row) < 2:
                     success = False
-                    continue  # Preskočiť neplatné riadky
+                    continue
 
                 waypoints_str, route_name = row[0], row[1].strip()
                 waypoints = waypoints_str.split(',')
 
-                # Skontrolovať, že počet súradníc je párny
                 if len(waypoints) % 2 != 0:
                     success = False
-                    continue  # Preskočiť riadky s nepárnym počtom súradníc
+                    continue
 
-                # Získanie nového ID pre Route
-                max_route_id = Route.select(fn.MAX(Route.id)).scalar()
+                max_route_id = await self.application.objects.scalar(Route.select(fn.MAX(Route.id)))
                 new_route_id = max_route_id + 1 if max_route_id else 1
 
-                # Vytvorenie novej trasy
-                new_route = Route.create(id=new_route_id, user_id=user.id, name=route_name, creation_date=datetime.datetime.now())
+                new_route = await self.application.objects.create(
+                    Route, id=new_route_id, user_id=user.id, name=route_name, creation_date=datetime.datetime.now())
 
-                # Získanie nového ID pre Waypoint
-                max_waypoint_id = Waypoint.select(fn.MAX(Waypoint.id)).scalar()
+                max_waypoint_id = await self.application.objects.scalar(Waypoint.select(fn.MAX(Waypoint.id)))
                 new_waypoint_id = max_waypoint_id + 1 if max_waypoint_id else 1
 
                 for i in range(0, len(waypoints), 2):
                     lat = float(waypoints[i].strip())
                     lng = float(waypoints[i+1].strip())
-                    Waypoint.create(
+                    await self.application.objects.create(
+                        Waypoint,
                         id=new_waypoint_id,
                         route_id=new_route.id,
                         lat=lat,
@@ -187,17 +183,14 @@ class UploadHandler(BaseHandler):
 
 
 class DeleteRouteHandler(BaseHandler):
-    def get(self, route_id):
+    async def get(self, route_id):
         user = self.get_current_user()
         if not user:
             self.redirect("/login")
             return
 
-        # Najprv zmažeme všetky waypointy prislúchajúce k danej trase
-        Waypoint.delete().where(Waypoint.route_id == route_id).execute()
-
-        # Potom zmažeme samotnú trasu
-        Route.delete().where(Route.id == route_id).execute()
+        await self.application.objects.execute(Waypoint.delete().where(Waypoint.route_id == route_id))
+        await self.application.objects.execute(Route.delete().where(Route.id == route_id))
 
         self.redirect("/routes")
 
@@ -210,11 +203,8 @@ class LogoutHandler(BaseHandler):
 
 class SimulateHandler(BaseHandler):
     def get(self):
-        user = self.get_current_user()
-        if not user:
-            self.redirect("/login")
-            return
         num_points = int(self.get_argument("points", 100))
+
         # Simulácia údajov
         points = [{"lat": 49.1951, "lng": 16.6068} for _ in range(num_points)]
         self.render_template("map.html", waypoints=points)
