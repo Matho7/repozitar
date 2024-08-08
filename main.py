@@ -3,7 +3,7 @@ import tornado.web
 import os
 import config
 from models import db
-from handlers import IndexHandler, GoogleLoginHandler, PolylineHandler, DirectionsHandler, RoutesHandler, UploadHandler, DeleteRouteHandler, LogoutHandler, SimulateHandler
+from handlers import IndexHandler, GoogleLoginHandler, PolylineHandler, DirectionsHandler, RoutesHandler, UploadHandler, DeleteRouteHandler, LogoutHandler
 from custom_static_file_handler import AuthStaticFileHandler
 from middleware import AuthMiddleware
 
@@ -20,7 +20,6 @@ class Application(tornado.web.Application):
             (r"/upload", UploadHandler),
             (r"/delete/(\d+)", DeleteRouteHandler),
             (r"/logout", LogoutHandler),
-            (r"/simulate", SimulateHandler),
             (r'/static/(.*)', AuthStaticFileHandler, {'path': os.path.join(os.path.dirname(__file__), "templates")}),
         ]
         settings = {

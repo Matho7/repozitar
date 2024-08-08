@@ -71,10 +71,14 @@ class GoogleLoginHandler(BaseHandler, GoogleOAuth2Mixin):
 
 class RoutesHandler(BaseHandler):
     def get(self):
+
         user = self.get_current_user()
         if not user:
             self.redirect("/login")
             return
+
+        # user = User.get(User.id == 1)
+
         routes = Route.select().where(Route.user_id == user.id)
         message = self.get_argument("message", None)
         self.render_template("routes.html", routes=routes, message=message)
@@ -82,29 +86,36 @@ class RoutesHandler(BaseHandler):
 
 class PolylineHandler(BaseHandler):
     def get(self, route_id):
+
         user = self.get_current_user()
         if not user:
             self.redirect("/login")
             return
+
         waypoints = Waypoint.select().where(Waypoint.route_id == route_id)
+        route = Route.get(Route.id == route_id)
         waypoint_list = [{"lat": wp.lat, "lng": wp.lng} for wp in waypoints]
-        self.render_template("map.html", waypoints=waypoint_list)
+        markers = [{"lat": wp.lat, "lng": wp.lng} for wp in waypoints]
+        self.render_template("map.html", waypoints=waypoint_list, markers=markers, route_name=route.name)
 
 
 class DirectionsHandler(BaseHandler):
     async def get(self, route_id):
+
         user = self.get_current_user()
         if not user:
             self.redirect("/login")
             return
+
         waypoints = Waypoint.select().where(Waypoint.route_id == route_id)
+        route = Route.get(Route.id == route_id)
 
         if not waypoints:
             self.write("No waypoints found for this route.")
             return
 
         start = (waypoints[0].lat, waypoints[0].lng)
-        end = (waypoints[-1].lat, waypoints[0].lng)
+        end = (waypoints[-1].lat, waypoints[-1].lng)
         intermediate_waypoints = [(waypoint.lat, waypoint.lng) for waypoint in waypoints[1:-1]]
 
         # Build URL
@@ -121,18 +132,25 @@ class DirectionsHandler(BaseHandler):
             decoded_polyline = polyline.decode(polyline_data)
 
             waypoint_list = [{"lat": lat, "lng": lng} for lat, lng in decoded_polyline]
-            self.render_template("map.html", waypoints=waypoint_list)
+            markers = [{"lat": start[0], "lng": start[1]}] + \
+                      [{"lat": wp[0], "lng": wp[1]} for wp in intermediate_waypoints] + \
+                      [{"lat": end[0], "lng": end[1]}]
+
+            self.render_template("map.html", waypoints=waypoint_list, markers=markers, route_name=route.name)
         except HTTPClientError as e:
             print(f"HTTP request to OSRM server failed: {e}")
             self.write("Error fetching directions from OSRM server.")
 
 
 class UploadHandler(BaseHandler):
-    async def post(self):
+    def post(self):
+
         user = self.get_current_user()
         if not user:
             self.redirect("/login")
             return
+
+        # user = User.get(User.id == 1)
 
         fileinfo = self.request.files['file'][0]
         data = fileinfo['body'].decode('utf-8')
@@ -152,20 +170,19 @@ class UploadHandler(BaseHandler):
                     success = False
                     continue
 
-                max_route_id = await self.application.objects.scalar(Route.select(fn.MAX(Route.id)))
+                max_route_id = Route.select(fn.MAX(Route.id)).scalar()
                 new_route_id = max_route_id + 1 if max_route_id else 1
 
-                new_route = await self.application.objects.create(
-                    Route, id=new_route_id, user_id=user.id, name=route_name, creation_date=datetime.datetime.now())
+                new_route = Route.create(
+                    id=new_route_id, user_id=user.id, name=route_name, creation_date=datetime.datetime.now())
 
-                max_waypoint_id = await self.application.objects.scalar(Waypoint.select(fn.MAX(Waypoint.id)))
+                max_waypoint_id = Waypoint.select(fn.MAX(Waypoint.id)).scalar()
                 new_waypoint_id = max_waypoint_id + 1 if max_waypoint_id else 1
 
                 for i in range(0, len(waypoints), 2):
                     lat = float(waypoints[i].strip())
                     lng = float(waypoints[i+1].strip())
-                    await self.application.objects.create(
-                        Waypoint,
+                    Waypoint.create(
                         id=new_waypoint_id,
                         route_id=new_route.id,
                         lat=lat,
@@ -183,28 +200,21 @@ class UploadHandler(BaseHandler):
 
 
 class DeleteRouteHandler(BaseHandler):
-    async def get(self, route_id):
+    def get(self, route_id):
         user = self.get_current_user()
         if not user:
             self.redirect("/login")
             return
 
-        await self.application.objects.execute(Waypoint.delete().where(Waypoint.route_id == route_id))
-        await self.application.objects.execute(Route.delete().where(Route.id == route_id))
-
-        self.redirect("/routes")
+        try:
+            Waypoint.delete().where(Waypoint.route_id == route_id).execute()
+            Route.delete().where(Route.id == route_id).execute()
+            self.redirect("/routes")
+        except Exception as e:
+            self.write(f"Error deleting route: {e}")
 
 
 class LogoutHandler(BaseHandler):
     def get(self):
         self.clear_cookie("user")
         self.redirect("/")
-
-
-class SimulateHandler(BaseHandler):
-    def get(self):
-        num_points = int(self.get_argument("points", 100))
-
-        # Simulácia údajov
-        points = [{"lat": 49.1951, "lng": 16.6068} for _ in range(num_points)]
-        self.render_template("map.html", waypoints=points)

@@ -18,19 +18,69 @@
             cursor: pointer;
             border-radius: 4px;
         }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            height: 100vh;
+            overflow: auto;
+        }
+        .header {
+            width: 100%;
+            text-align: center;
+            background-color: #4CAF50;
+            color: white;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 2em;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            max-width: 1200px;
+            margin: 2em 0;
+            text-align: center;
+            overflow: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1em 0;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .notification {
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #4CAF50;
+            background-color: #dff0d8;
+            color: #3c763d;
+            border-radius: 4px;
+        }
+        .upload-form {
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
-    <header>
+    <header class="header">
         <h1>Route Data</h1>
     </header>
     <div class="container">
-        <form action="/upload" method="post" enctype="multipart/form-data">
-            <label for="file">Upload CSV:</label>
-            <input type="file" name="file" id="file" accept=".csv">
-            <button type="submit">Upload</button>
-        </form>
-
         <!-- Miesto pre notifikácie -->
         {% if message %}
             <div class="notification">
@@ -56,8 +106,16 @@
             </tr>
             {% endfor %}
         </table>
+
+        <div class="upload-form">
+            <form action="/upload" method="post" enctype="multipart/form-data">
+                <label for="file">Upload CSV:</label>
+                <input type="file" name="file" id="file" accept=".csv">
+                <button type="submit">Upload</button>
+            </form>
+        </div>
+
+        <button class="back-button" onclick="window.location.href='/'">Return to Home</button>
     </div>
-    <div id="map"></div>
-    <button class="back-button" onclick="window.location.href='/'">Return to Home</button>
 </body>
 </html>

@@ -18,7 +18,7 @@
         #map {
             height: 80vh;
             width: 90vw;
-            margin: 20px 0;
+            margin: 10px 0;
         }
         h1 {
             font-size: 2em;
@@ -26,6 +26,13 @@
             padding: 20px;
             background-color: #4CAF50;
             color: white;
+            text-align: center;
+            width: 100%;
+        }
+        h2 {
+            font-size: 1.5em;
+            margin: 0;
+            padding: 10px;
             text-align: center;
             width: 100%;
         }
@@ -53,12 +60,14 @@
 <body>
     <div class="container">
         <h1>Map</h1>
+        <h2>{{ route_name }}</h2>
         <div id="map"></div>
         <button class="back-button" onclick="window.history.back()">Return to Route Data</button>
     </div>
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
         var waypoints = JSON.parse('{{ waypoints | tojson | safe }}');
+        var markers = JSON.parse('{{ markers | tojson | safe }}');
         var map = L.map('map').setView([0, 0], 2);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -71,6 +80,11 @@
         });
 
         L.polyline(latlngs, {color: 'red'}).addTo(map);
+
+        // Pridajte markers pre každý waypoint
+        markers.forEach(function(marker) {
+            L.marker([marker.lat, marker.lng]).addTo(map);
+        });
 
         // Nastavte pohľad mapy na polyline
         if (latlngs.length > 0) {
