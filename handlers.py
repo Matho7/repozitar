@@ -176,20 +176,25 @@ class UploadHandler(BaseHandler):
                 new_route = Route.create(
                     id=new_route_id, user_id=user.id, name=route_name, creation_date=datetime.datetime.now())
 
+                # Prepare list of dictionaries for bulk insertion
+                waypoint_data = []
                 max_waypoint_id = Waypoint.select(fn.MAX(Waypoint.id)).scalar()
                 new_waypoint_id = max_waypoint_id + 1 if max_waypoint_id else 1
 
                 for i in range(0, len(waypoints), 2):
                     lat = float(waypoints[i].strip())
                     lng = float(waypoints[i+1].strip())
-                    Waypoint.create(
-                        id=new_waypoint_id,
-                        route_id=new_route.id,
-                        lat=lat,
-                        lng=lng,
-                        order_wp=(i//2) + 1
-                    )
+                    waypoint_data.append({
+                        'id': new_waypoint_id,
+                        'route_id': new_route.id,
+                        'lat': lat,
+                        'lng': lng,
+                        'order_wp': (i//2) + 1
+                    })
                     new_waypoint_id += 1
+
+                # Bulk insert the waypoint data
+                Waypoint.insert_many(waypoint_data).execute()
 
             if success:
                 self.redirect("/routes?message=Upload successful")
