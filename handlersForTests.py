@@ -198,6 +198,67 @@ class UploadHandler(BaseHandler):
         except Exception as e:
             self.redirect(f"/routes?message=Upload failed: {e}")
 
+class UploadHandler(BaseHandler):
+    def post(self):
+
+        """
+                user = self.get_current_user()
+                if not user:
+                    self.redirect("/login")
+                    return
+        """
+        user = User.get(User.id == 1)
+
+        fileinfo = self.request.files['file'][0]
+        data = fileinfo['body'].decode('utf-8')
+
+        reader = csv.reader(io.StringIO(data), delimiter=';')
+        success = True
+        try:
+            for row in reader:
+                if len(row) < 2:
+                    success = False
+                    continue
+
+                waypoints_str, route_name = row[0], row[1].strip()
+                waypoints = waypoints_str.split(',')
+
+                if len(waypoints) % 2 != 0:
+                    success = False
+                    continue
+
+                max_route_id = Route.select(fn.MAX(Route.id)).scalar()
+                new_route_id = max_route_id + 1 if max_route_id else 1
+
+                new_route = Route.create(
+                    id=new_route_id, user_id=user.id, name=route_name, creation_date=datetime.datetime.now())
+
+                # Prepare list of dictionaries for bulk insertion
+                waypoint_data = []
+                max_waypoint_id = Waypoint.select(fn.MAX(Waypoint.id)).scalar()
+                new_waypoint_id = max_waypoint_id + 1 if max_waypoint_id else 1
+
+                for i in range(0, len(waypoints), 2):
+                    lat = float(waypoints[i].strip())
+                    lng = float(waypoints[i+1].strip())
+                    waypoint_data.append({
+                        'id': new_waypoint_id,
+                        'route_id': new_route.id,
+                        'lat': lat,
+                        'lng': lng,
+                        'order_wp': (i//2) + 1
+                    })
+                    new_waypoint_id += 1
+
+                # Bulk insert the waypoint data
+                Waypoint.insert_many(waypoint_data).execute()
+
+            if success:
+                self.redirect("/routes?message=Upload successful")
+            else:
+                self.redirect("/routes?message=Upload completed with some errors")
+        except Exception as e:
+            self.redirect(f"/routes?message=Upload failed: {e}")
 
 class DeleteRouteHandler(BaseHandler):
     def get(self, route_id):
